@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doxa Engine v2.7-Conference — Patch the Conference</title>
+<style>
+body{font-family:Arial,sans-serif;background:#0a0a0f;color:#e8e6e3;padding:16px;max-width:900px;margin:0 auto;line-height:1.5}
+h1{color:#c9a84c;text-align:center;font-size:22px;letter-spacing:3px;text-transform:uppercase;margin-bottom:4px}
+.subtitle{text-align:center;color:#6b6b7b;font-size:11px;margin-bottom:8px;letter-spacing:1px}
+.version-badge{text-align:center;color:#c9a84c;font-size:10px;margin-bottom:16px;font-family:monospace}
+label{display:block;color:#c9a84c;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;margin-top:16px}
+textarea,input[type="text"]{width:100%;background:#111118;border:1px solid #1e1e2e;color:#e8e6e3;padding:12px;font-size:14px;border-radius:4px;font-family:inherit;box-sizing:border-box}
+textarea{min-height:140px}
+button{background:#c9a84c;color:#0a0a0f;border:none;padding:14px;font-size:15px;font-weight:bold;text-transform:uppercase;letter-spacing:2px;cursor:pointer;border-radius:4px;width:100%;margin-top:14px}
+button:hover{background:#8a7340}
+.preset-btn{background:#111118;border:1px solid #1e1e2e;color:#6b6b7b;padding:6px 10px;font-size:11px;border-radius:4px;cursor:pointer;margin:0 4px 4px 0;display:inline-block;width:auto;letter-spacing:0;text-transform:none;font-weight:normal;margin-top:0}
+.preset-btn:hover{border-color:#c9a84c;color:#c9a84c}
+.result{margin-top:20px;display:none}
+.result.show{display:block}
+.verdict{text-align:center;padding:20px;border-radius:4px;font-size:18px;font-weight:bold;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;border:2px solid}
+.verdict.fraud{background:rgba(139,58,58,0.15);color:#d24545;border-color:#8b3a3a}
+.verdict.suspicious{background:rgba(107,90,58,0.15);color:#c9a84c;border-color:#6b5a3a}
+.verdict.clean{background:rgba(58,107,58,0.15);color:#5ab85a;border-color:#3a6b3a}
+.score-display{text-align:center;font-size:42px;font-weight:bold;color:#c9a84c;margin:10px 0;letter-spacing:2px}
+.score-label{text-align:center;color:#6b6b7b;font-size:11px;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px}
+.pillars{text-align:center;margin:14px 0;color:#8a7340;font-size:12px;font-style:italic}
+.matrix{background:#111118;border:1px solid #1e1e2e;padding:12px;margin-bottom:8px;border-radius:4px}
+.matrix-title{font-weight:bold;font-size:13px;color:#c9a84c}
+.matrix-score{float:right;font-size:11px;padding:2px 8px;border-radius:3px;font-weight:bold}
+.matrix-zero{background:#1e1e2e;color:#6b6b7b}
+.matrix-low{background:#3a4a3a;color:#5ab85a}
+.matrix-mid{background:#6b5a3a;color:#c9a84c}
+.matrix-high{background:#8b3a3a;color:white}
+.matrix-hit{margin-top:6px;padding-left:12px;border-left:2px solid #1e1e2e}
+.hit-label{font-size:12px;color:#e8e6e3}
+.hit-points{color:#c9a84c;font-weight:bold;font-size:11px}
+.hit-quote{font-size:11px;color:#8a7340;margin-top:2px;font-family:monospace;background:#0a0a0f;padding:6px;border-radius:2px;border-left:2px solid #c9a84c}
+.hit-negated{color:#8b3a3a;font-size:10px;font-style:italic}
+.watermark{background:#111118;border:1px solid #1e1e2e;padding:12px;margin-top:14px;font-family:monospace;font-size:11px;color:#6b6b7b;line-height:1.6}
+.watermark strong{color:#c9a84c}
+.export-btn{background:transparent;border:1px solid #c9a84c;color:#c9a84c;padding:8px 16px;font-size:11px;text-transform:uppercase;letter-spacing:1px;cursor:pointer;border-radius:4px;margin-top:10px;font-weight:bold;width:auto;display:inline-block}
+.export-btn:hover{background:#c9a84c;color:#0a0a0f}
+footer{text-align:center;padding:24px 0 10px;font-size:10px;color:#6b6b7b;border-top:1px solid #1e1e2e;margin-top:24px}
+</style>
+</head>
+<body>
+<div style="background:#c9a84c;color:#0a0a0f;padding:8px;text-align:center;font-weight:bold;font-size:14px;letter-spacing:2px;border:2px solid #8a7340;margin-bottom:10px">
+⚡ DOXA ENGINE v2.7-CONFERENCE — PATCH THE CONFERENCE ⚡
+</div>
+<h1>Doxa Engine</h1>
+<div class="subtitle">v2.7-Conference — Conference Document Fraud Scanner — Patch the Conference Hackathon</div>
+<div class="version-badge">PATTERN SET HASH: <span id="patternHash">computing...</span></div>
+
+<div>
+<label>Conference Document to Scan (Speaker Agreement / Vendor Contract / Sponsor Terms / Privacy Policy)</label>
+<div>
+<button class="preset-btn" onclick="loadPreset(0)">Clean Speaker Agreement</button>
+<button class="preset-btn" onclick="loadPreset(1)">Predatory Vendor Contract</button>
+<button class="preset-btn" onclick="loadPreset(2)">Conference App Privacy Policy</button>
+<button class="preset-btn" onclick="loadPreset(3)">Sponsor Agreement (Subtle)</button>
+<button class="preset-btn" onclick="clearInput()">Clear</button>
+</div>
+<textarea id="docInput" placeholder="Paste any conference document here..." maxlength="100000"></textarea>
+</div>
+
+<div>
+<label>Document Name (optional)</label>
+<input type="text" id="docName" placeholder="e.g., TechConf 2026 Speaker Agreement" maxlength="500">
+</div>
+
+<button onclick="runScan()">Run Forensic Scan</button>
+
+<div class="result" id="resultArea">
+<div class="verdict" id="verdictBox">SCANNING...</div>
+<div class="score-display" id="scoreDisplay">--</div>
+<div class="score-label">Composite Score / 100</div>
+<div class="pillars" id="pillarsBox"></div>
+<div id="matrixArea"></div>
+<div class="watermark" id="watermarkBox"></div>
+<button class="export-btn" onclick="exportReport()">Export Forensic Report</button>
+</div>
+
+<footer>
+Throne Revenue LLC · Axis Sovereign Energy LLC<br>
+Patch the Conference Hackathon · Bright Data · Oct 24, 2026<br>
+Identical input → identical score. Timestamp recorded at scan time.
+</footer>
+
+<script>
+var PRESETS = [
+"Speaker Agreement — TechConf 2026. Speaker agrees to present at the scheduled time. Speaker retains ownership of presentation materials. Conference may record the session for archival purposes. Conference will provide AV equipment and technical support. Speaker responsible for own travel and accommodation. Either party may terminate this agreement with 30 days written notice. Governing law: California.",
+"Vendor Exhibition Agreement — TechConf 2026. By signing this agreement, Exhibitor agrees to the following terms. The exhibition space is provided as is, with no warranty of any kind. Conference may modify this agreement at any time without prior notice. Conference may terminate this agreement at any time for any reason or no reason. Limitation of liability: in no event shall Conference liability exceed $500. Exhibitor shall indemnify and hold Conference harmless from any claim. Conference may use exhibitor data for marketing and analytics. Conference may retain exhibitor data after termination and preserve it indefinitely. All fees are non-refundable. Cancellation fee of $2,000 applies. Conference may photograph and record booth for promotional purposes without additional consent. Conference reserves right to relocate booth at any time. Governing law: Delaware. Automatic renewal applies unless cancelled 90 days prior. Conference may share exhibitor attendee scan data with third parties. Exhibitor waives right to jury trial. Binding arbitration in Conference home jurisdiction.",
+"Conference App Privacy Policy — TechConf 2026. By using the Conference App, you agree to this Privacy Policy. We may collect location data, contact information, and browsing activity. We may use your data for marketing purposes and analytics. We may share your data with sponsors and third parties. We may modify this policy at any time without notice. We may terminate your access at our sole discretion. You may opt out of certain data collection by default. Your continued use constitutes acceptance. Governing law: Delaware. Third parties may access your data.",
+"Sponsor Agreement — TechConf 2026. Sponsor agrees to sponsor TechConf 2026 at the Gold level. Sponsor receives booth space, logo placement, and 5 attendee passes. Either party may terminate for material breach with 30 days cure. Limitation of liability: each party's liability capped at sponsorship fee paid. Sponsor retains ownership of its trademarks. Conference may use sponsor logos for promotional purposes. Conference may modify sponsorship benefits with 30 days notice. Governing law: California."
+];
+
+function loadPreset(i){document.getElementById("docInput").value = PRESETS[i];}
+function clearInput(){document.getElementById("docInput").value = "";}
+
+var WEIGHTS = {m1:0.15, m2:0.10, m3:0.10, m4:0.10, m5:0.10, m6:0.10, m7:0.10, m8:0.10, m9:0.10, m10:0.05};
+var MATRIX_NAMES = {
+m1:"Determinism", m2:"Provenance", m3:"Independence", m4:"Reversibility",
+m5:"Language vs Load", m6:"Dependency", m7:"Exit Cost",
+m8:"Authority Substitution", m9:"Adversarial Survival", m10:"Structural Echo"
+};
+var STRONG = 5, ECHO = 3;
+
+var LIBRARY = [
+// === ORIGINAL CONTRACT PATTERNS (from v2.6) ===
+[/\bas\s+is\b|\bas-is\b|disclaim[s]?\s+.{0,40}warrant|no\s+warrant/gi, "m5", STRONG, "as-is / no-warranty", "Theater", "LOCKED"],
+[/\bgreater\s+of\b|limitation\s+of\s+liability|liabilit.{0,30}\bcap/gi, "m4", STRONG, "liability cap", "Asymmetry", "LOCKED"],
+[/(suspend|terminate).{0,40}without\s+(prior\s+)?notice/gi, "m7", STRONG, "suspension-without-notice", "Time", "LOCKED"],
+[/\b(sole|our)\s+discretion\b/gi, "m8", STRONG, "sole-discretion", "Asymmetry", "LOCKED"],
+[/\bopt[- ]out\b/gi, "m5", STRONG, "opt-out default", "Extraction", "LOCKED"],
+[/\barbitrat/gi, "m4", STRONG, "arbitration clause", "Asymmetry", "LOCKED"],
+[/\bclass\s+action\s+waiver|waive.{0,30}class\s+action/gi, "m4", STRONG, "class-action waiver", "Asymmetry", "LOCKED"],
+[/\bindemnif|hold\s+harmless/gi, "m6", STRONG, "indemnification", "Extraction", "LOCKED"],
+[/\bgoverning\s+law\b/gi, "m3", ECHO, "governing-law", "Substance", "LOCKED"],
+[/\btrain.{0,40}(model|algorithm)|use.{0,40}(content|data).{0,40}train/gi, "m6", STRONG, "data-training clause", "Extraction", "LOCKED"],
+[/\bwithout\s+notice\b/gi, "m1", STRONG, "change-without-notice", "Time", "LOCKED"],
+[/\bwe\s+may\s+(modify|update|change|amend).{0,30}(terms|agreement|policy)/gi, "m1", STRONG, "unilateral modification", "Time", "LOCKED"],
+[/\bat\s+any\s+time\b/gi, "m1", ECHO, "at-any-time unilateral window", "Time", "LOCKED"],
+[/\bwe\s+may\s+(modify|suspend|discontinue).{0,30}service/gi, "m2", STRONG, "service mutation", "Substance", "LOCKED"],
+[/\bthird[- ]part(y|ies)\b/gi, "m3", ECHO, "third-party dependency", "Substance", "LOCKED"],
+[/\bdelete.{0,30}(account|data|content)|upon\s+termination.{0,40}delet/gi, "m7", STRONG, "exit data destruction", "Time", "LOCKED"],
+[/\byou\s+(may\s+not|cannot).{0,40}(sue|court|jury)/gi, "m9", STRONG, "court access removal", "Extraction", "LOCKED"],
+[/\bautomatic(ally)?\s+renew/gi, "m10", ECHO, "auto-renew echo", "Recursion", "LOCKED"],
+[/\bmodifiable\s+at\s+will\b/gi, "m1", STRONG, "terms modifiable at will", "Time", "LOCKED"],
+[/\beffective\s+(on|upon)\s+posting\b/gi, "m1", STRONG, "effective on posting", "Time", "LOCKED"],
+[/\bretained?\s+after\s+termination\b/gi, "m7", STRONG, "retained after termination", "Extraction", "LOCKED"],
+[/\bpreserv\w*\s+indefinitely|indefinite\s+preserv\w*/gi, "m7", STRONG, "preserved indefinitely", "Extraction", "LOCKED"],
+[/\bcourt\s+order|compelled\s+preserv\w*/gi, "m9", STRONG, "court order / compelled preservation", "Extraction", "LOCKED"],
+[/\bfor\s+any\s+reason\b/gi, "m8", STRONG, "for any reason (discretion amplifier)", "Asymmetry", "LOCKED"],
+[/\b(model|algorithm)s?\s+training\b|\btrain(s|ing|ed)?\s+on\b|\bto\s+train\b.{0,30}(model|algorithm|data)/gi, "m6", STRONG, "data-training clause (tightened)", "Extraction", "LOCKED"],
+[/\bopt(s|ed)\s*[-]?\s*out\b/gi, "m5", STRONG, "opt-out grammatical variant", "Extraction", "LOCKED"],
+[/\bwhichever\s+is\s+greater\b/gi, "m4", STRONG, "liability cap (whichever-is-greater)", "Asymmetry", "LOCKED"],
+[/\bby\s+default\b/gi, "m5", ECHO, "default-on (no affirmative consent)", "Extraction", "LOCKED"],
+[/\bnon-refundable\b/gi, "m7", ECHO, "non-refundable fees", "Time", "LOCKED"],
+[/\bcancellation\s+fee\b/gi, "m7", STRONG, "cancellation fee", "Time", "LOCKED"],
+
+// === NEW CONFERENCE-SPECIFIC PATTERNS ===
+// Speaker IP transfer / recording rights
+[/\bspeaker\s+(hereby\s+)?(assigns?|grants?|transfers?)\b/gi, "m6", STRONG, "speaker IP assignment", "Extraction", "LOCKED"],
+[/\bperpetual\s+(license|right)/gi, "m6", STRONG, "perpetual license (speaker IP)", "Extraction", "LOCKED"],
+[/\bright\s+to\s+record|may\s+record|record(s|ing)?\s+the\s+session/gi, "m6", ECHO, "recording rights", "Extraction", "LOCKED"],
+[/\bphotograph\s+and\s+record|record.*promotional/gi, "m6", STRONG, "promotional recording without consent", "Extraction", "LOCKED"],
+
+// Vendor data harvesting
+[/\bexhibitor\s+data|attendee\s+scan\s+data|lead\s+scanning/gi, "m6", STRONG, "attendee data harvesting", "Extraction", "LOCKED"],
+[/\bshare.*attendee.*data|share.*exhibitor.*data.*third/gi, "m6", STRONG, "data sharing with third parties", "Extraction", "LOCKED"],
+
+// Sponsor exclusivity
+[/\bexclusive\s+sponsor|category\s+exclusivity|no\s+competing\s+sponsor/gi, "m8", STRONG, "sponsor exclusivity lock-in", "Asymmetry", "LOCKED"],
+
+// Attendee surveillance
+[/\blocation\s+(data|tracking)|track.*location/gi, "m6", STRONG, "attendee location tracking", "Extraction", "LOCKED"],
+[/\bcontact\s+(information|exchange)|badge\s+scanning/gi, "m6", ECHO, "contact/badge data collection", "Extraction", "LOCKED"],
+[/\bbrowsing\s+activity|app\s+usage\s+data/gi, "m6", STRONG, "app usage surveillance", "Extraction", "LOCKED"],
+
+// Conference-specific modification/termination
+[/\brelocate\s+booth|reserves\s+right\s+to\s+relocate/gi, "m8", STRONG, "unilateral booth relocation", "Asymmetry", "LOCKED"],
+[/\bcontinued\s+use\s+constitutes\s+acceptance/gi, "m1", STRONG, "browsewrap consent", "Time", "LOCKED"],
+[/\bmodify.*benefits.*notice|modify.*policy.*without\s+notice/gi, "m1", STRONG, "unilateral benefit modification", "Time", "LOCKED"]
+];
+
+var PILLARS = ["Intent", "Substance", "Recursion", "Asymmetry", "Extraction", "Theater", "Time"];
+
+var NEGATIONS = ['not', 'no', 'never', 'without', 'cannot', "can't", "won't", "don't", "doesn't", "isn't", "aren't", "wasn't", "weren't"];
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
+async function sha256(text) {
+  try {
+    const buf = new TextEncoder().encode(text);
+    const hash = await crypto.subtle.digest('SHA-256', buf);
+    return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, '0')).join('');
+  } catch (e) {
+    return null;
+  }
+}
+
+async function computePatternHash() {
+  const patternStr = JSON.stringify(LIBRARY.map(e => [e[1], e[2], e[3], e[4], e[5]]));
+  const hash = await sha256(patternStr);
+  return hash ? hash.substring(0, 16).toUpperCase() : 'UNAVAILABLE';
+}
+
+computePatternHash().then(h => { document.getElementById('patternHash').textContent = h; });
+
+function normalize(text) {
+  var n = text.normalize("NFKC");
+  n = n.replace(/[\u200b\u200c\u200d\u200e\u200f\u202a-\u202e\u2060-\u2069\ufeff\u00ad]/g, "");
+  n = n.replace(/[\u0300-\u036f\u1ab0-\u1aff\u1dc0-\u1dff\ufe20-\ufe2f]/g, "");
+  return n;
+}
+
+function isNegated(text, matchIndex) {
+  var before = text.substring(Math.max(0, matchIndex - 40), matchIndex).toLowerCase();
+  var words = before.split(/\s+/).filter(w => w.length > 0);
+  var last3 = words.slice(-3);
+  for (var i = 0; i < last3.length; i++) {
+    var clean = last3[i].replace(/[^a-z']/g, '');
+    if (NEGATIONS.indexOf(clean) !== -1) { return true; }
+  }
+  return false;
+}
+
+function scan(text) {
+text = normalize(text);
+var evidence = {};
+for (var m in WEIGHTS) evidence[m] = [];
+for (var i = 0; i < LIBRARY.length; i++) {
+var entry = LIBRARY[i];
+var pattern = entry[0], matrix = entry[1], points = entry[2], label = entry[3], pillar = entry[4], status = entry[5];
+if (status !== "LOCKED" && status !== "PROPOSED") continue;
+var actualPoints = (status === "PROPOSED") ? 0 : points;
+pattern.lastIndex = 0;
+var match;
+while ((match = pattern.exec(text)) !== null) {
+var start = Math.max(0, match.index - 40);
+var end = Math.min(text.length, match.index + match[0].length + 40);
+var quote = text.substring(start, end).replace(/\s+/g, " ").trim();
+var negated = isNegated(text, match.index);
+evidence[matrix].push({points: points, actualPoints: actualPoints, label: label, pillar: pillar, status: status, quote: quote, negated: negated});
+if (match.index === pattern.lastIndex) pattern.lastIndex++;
+}
+}
+return evidence;
+}
+
+function score(evidence) {
+var perMatrix = {};
+var composite = 0.0;
+for (var m in WEIGHTS) {
+var raw = 0;
+for (var i = 0; i < evidence[m].length; i++) {
+if (!evidence[m][i].negated) {
+raw += evidence[m][i].actualPoints || evidence[m][i].points;
+}
+}
+var mscore = Math.min(10, raw);
+perMatrix[m] = {evidence_score: mscore, hits: evidence[m]};
+composite += mscore * WEIGHTS[m];
+}
+composite *= 10.0;
+return {final: Math.round(composite), perMatrix: perMatrix};
+}
+
+function verdictFor(score) {
+if (score >= 0 && score <= 34) return "SUBSTANTIAL — sign with confidence";
+if (score >= 35 && score <= 69) return "MARGINAL — human review before signing";
+if (score >= 70 && score <= 100) return "HOLLOW — refuse, preserve evidence, dispute route";
+return "OUT OF RANGE";
+}
+
+function pillarsPresent(perMatrix) {
+var found = [];
+for (var m in perMatrix) {
+for (var i = 0; i < perMatrix[m].hits.length; i++) {
+if (!perMatrix[m].hits[i].negated) {
+var p = perMatrix[m].hits[i].pillar;
+if (found.indexOf(p) === -1) found.push(p);
+}
+}
+}
+var result = [];
+for (var i = 0; i < PILLARS.length; i++) {
+if (found.indexOf(PILLARS[i]) !== -1) result.push(PILLARS[i]);
+}
+return result;
+}
+
+var lastReport = null;
+
+function runScan() {
+var text = document.getElementById("docInput").value;
+var docName = document.getElementById("docName").value || "<stdin>";
+if (!text || !text.trim()) {
+alert("ANTI-FAKE LOCK: no evidence entered, no score accepted.");
+return;
+}
+
+var resultArea = document.getElementById("resultArea");
+var verdictBox = document.getElementById("verdictBox");
+var scoreDisplay = document.getElementById("scoreDisplay");
+var pillarsBox = document.getElementById("pillarsBox");
+var matrixArea = document.getElementById("matrixArea");
+var watermarkBox = document.getElementById("watermarkBox");
+
+resultArea.className = "result show";
+verdictBox.innerHTML = "ANALYZING...";
+verdictBox.className = "verdict suspicious";
+scoreDisplay.innerHTML = "--";
+pillarsBox.innerHTML = "";
+matrixArea.innerHTML = "";
+watermarkBox.innerHTML = "";
+
+setTimeout(async function() {
+var evidence = scan(text);
+var totalHits = 0, negatedCount = 0;
+for (var m in evidence) {
+totalHits += evidence[m].length;
+for (var i = 0; i < evidence[m].length; i++) {
+if (evidence[m][i].negated) negatedCount++;
+}
+}
+
+if (totalHits === 0) {
+verdictBox.innerHTML = "SUBSTANTIAL — sign with confidence";
+verdictBox.className = "verdict clean";
+scoreDisplay.innerHTML = "0";
+pillarsBox.innerHTML = "No structural markers detected. Document is clean.";
+matrixArea.innerHTML = '<div class="matrix"><div class="matrix-title">No evidence hits</div><div style="font-size:12px;color:#6b6b7b;margin-top:4px">A zero score is the analysis result.</div></div>';
+} else {
+var s = score(evidence);
+var verdict = verdictFor(s.final);
+var pillars = pillarsPresent(s.perMatrix);
+
+if (verdict.indexOf("HOLLOW") !== -1) verdictBox.className = "verdict fraud";
+else if (verdict.indexOf("MARGINAL") !== -1) verdictBox.className = "verdict suspicious";
+else verdictBox.className = "verdict clean";
+
+verdictBox.innerHTML = verdict;
+scoreDisplay.innerHTML = s.final;
+var pillarText = "PILLAR ANATOMY: " + (pillars.length ? pillars.join(", ") : "none");
+if (negatedCount > 0) pillarText += " (" + negatedCount + " negated)";
+pillarsBox.innerHTML = pillarText;
+
+var html = "";
+var matrixKeys = Object.keys(s.perMatrix).sort(function(a,b){return parseInt(a.substring(1)) - parseInt(b.substring(1));});
+for (var i = 0; i < matrixKeys.length; i++) {
+var mk = matrixKeys[i];
+var pm = s.perMatrix[mk];
+if (pm.evidence_score === 0 && pm.hits.length === 0) continue;
+var scoreClass = pm.evidence_score === 0 ? "matrix-zero" : (pm.evidence_score >= 7 ? "matrix-high" : (pm.evidence_score >= 4 ? "matrix-mid" : "matrix-low"));
+html += '<div class="matrix">';
+html += '<span class="matrix-score ' + scoreClass + '">' + mk.toUpperCase() + ' — ' + pm.evidence_score + '/10</span>';
+html += '<div class="matrix-title">' + mk + ' ' + MATRIX_NAMES[mk] + '</div>';
+if (pm.hits.length === 0) {
+html += '<div style="font-size:11px;color:#6b6b7b;margin-top:4px">No hits.</div>';
+} else {
+var seen = {};
+for (var j = 0; j < pm.hits.length; j++) {
+var h = pm.hits[j];
+var key = h.label + "|" + h.quote;
+if (seen[key]) continue;
+seen[key] = true;
+var proposedTag = h.status === "PROPOSED" ? ' <span style="color:#8b3a3a;font-size:10px">*PROPOSED</span>' : "";
+var negatedTag = h.negated ? ' <span class="hit-negated">(NEGATED)</span>' : "";
+html += '<div class="matrix-hit">';
+html += '<div><span class="hit-points">[+' + (h.actualPoints || h.points) + ']</span> <span class="hit-label">' + esc(h.label) + '</span> <span style="color:#6b6b7b;font-size:10px">(' + esc(h.pillar) + ')</span>' + proposedTag + negatedTag + '</div>';
+html += '<div class="hit-quote">"' + esc(h.quote) + '"</div>';
+html += '</div>';
+}
+}
+html += '</div>';
+}
+matrixArea.innerHTML = html;
+}
+
+var timestamp = new Date().toISOString();
+var scanHashInput = text + verdictBox.innerHTML + scoreDisplay.innerHTML;
+var fullHash = await sha256(scanHashInput);
+var scanId = fullHash ? "DOXA-" + fullHash.substring(0, 16).toUpperCase() : "DOXA-UNAVAILABLE";
+var patternHash = await computePatternHash();
+
+var wm = "<strong>FORENSIC OUTPUT CERTIFICATION</strong><br>" +
+"TIMESTAMP: " + timestamp + " (UTC) — scan execution time<br>" +
+"SCAN ID: " + scanId + " (SHA-256, first 16 hex)<br>" +
+"PATTERN SET HASH: " + patternHash + " (v2.7-conference integrity)<br>" +
+"DOCUMENT: " + esc(docName) + "<br>" +
+"INPUT LENGTH: " + text.length + " characters<br>" +
+"ENGINE: Doxa Engine v2.7-Conference<br>" +
+"PATCH: Conference Document Fraud Scanner<br>" +
+"DETERMINISM: Verified — identical input produces identical score<br>" +
+"NEGATION HANDLING: Active (3-word lookback)<br>" +
+"PATTERNS: " + LIBRARY.length + " (LOCKED + PROPOSED)<br>" +
+"MATRICES: 10 weighted, capped at 10 per matrix<br>" +
+"PILLARS: 7 (Intent, Substance, Recursion, Asymmetry, Extraction, Theater, Time)<br>" +
+"OPERATOR: Johnny Morales — Axis Sovereign Energy LLC<br>" +
+"STATUS: OFFLINE — NO NETWORK TRANSMISSION";
+watermarkBox.innerHTML = wm;
+
+lastReport = {
+timestamp: timestamp, scanId: scanId, patternHash: patternHash,
+docName: docName, text: text, verdict: verdictBox.innerHTML,
+score: scoreDisplay.innerHTML, negatedCount: negatedCount,
+watermark: wm, evidence: evidence
+};
+}, 300);
+}
+
+function buildExportBreakdown(evidence, scoreResult) {
+var lines = "";
+var matrixKeys = Object.keys(scoreResult.perMatrix).sort(function(a,b){return parseInt(a.substring(1)) - parseInt(b.substring(1));});
+for (var i = 0; i < matrixKeys.length; i++) {
+var mk = matrixKeys[i];
+var pm = scoreResult.perMatrix[mk];
+if (pm.evidence_score > 0 || pm.hits.length > 0) {
+lines += mk.toUpperCase() + " " + MATRIX_NAMES[mk] + ": " + pm.evidence_score + "/10\n";
+for (var j = 0; j < pm.hits.length; j++) {
+var h = pm.hits[j];
+var negTag = h.negated ? " (NEGATED)" : "";
+var pts = h.actualPoints !== undefined ? h.actualPoints : h.points;
+lines += "  [+" + pts + "] " + h.label + " (" + h.pillar + ")" + negTag + "\n";
+lines += "    \"" + h.quote + "\"\n";
+}
+}
+}
+return lines;
+}
+
+function exportReport() {
+if (!lastReport) {alert("Run a scan first."); return;}
+var r = lastReport;
+var text = "DOXA ENGINE v2.7-CONFERENCE — FORENSIC REPORT\n";
+text += "================================================================\n\n";
+text += "SCAN ID: " + r.scanId + " (SHA-256)\n";
+text += "PATTERN SET HASH: " + r.patternHash + " (v2.7-conference)\n";
+text += "TIMESTAMP: " + r.timestamp + " (UTC)\n";
+text += "DOCUMENT: " + r.docName + "\n";
+text += "VERDICT: " + r.verdict + "\n";
+text += "COMPOSITE SCORE: " + r.score + " / 100\n";
+if (r.negatedCount > 0) text += "NEGATED HITS: " + r.negatedCount + "\n";
+text += "\nPER-MATRIX BREAKDOWN:\n";
+if (r.evidence) {
+var s = score(r.evidence);
+text += buildExportBreakdown(r.evidence, s);
+}
+text += "\nINPUT TEXT:\n" + r.text + "\n\n";
+text += "================================================================\n";
+text += "Patch the Conference Hackathon · Bright Data · Oct 24, 2026\n";
+text += "Throne Revenue LLC · Axis Sovereign Energy LLC\n";
+text += "Operator: Johnny Morales\n";
+text += "v2.7-conference: Conference document fraud scanner\n";
+text += "Deterministic. Verifiable. Offline.\n";
+var blob = new Blob([text], {type: "text/plain"});
+var url = URL.createObjectURL(blob);
+var a = document.createElement("a");
+a.href = url;
+a.download = "Doxa_Conference_Report_" + r.scanId + ".txt";
+document.body.appendChild(a);
+a.click();
+document.body.removeChild(a);
+URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
